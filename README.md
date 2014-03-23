@@ -1,3 +1,5 @@
+[![Travis](https://secure.travis-ci.org/toolness/jsondown.png)](http://travis-ci.org/toolness/jsondown)
+
 This is a drop-in replacement for [LevelDOWN][] that writes to
 a JSON file on disk.
 
