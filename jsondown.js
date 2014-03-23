@@ -1,33 +1,43 @@
 var util = require('util');
 var fs = require('fs');
-var AbstractLevelDOWN = require('abstract-leveldown').AbstractLevelDOWN;
+var MemDOWN = require('memdown');
 
-// Prefix to avoid key='__proto__' type shenanigans.
-var KEY_PREFIX = '$';
+function noop() {}
 
 function JsonDOWN(location) {
   if (!(this instanceof JsonDOWN))
     return new JsonDOWN(location);
-  AbstractLevelDOWN.call(this, location);
+  MemDOWN.call(this, location);
+  this._isLoadingFromFile = false;
   this._isWriting = false;
   this._queuedWrites = [];
 }
 
-util.inherits(JsonDOWN, AbstractLevelDOWN);
+util.inherits(JsonDOWN, MemDOWN);
 
 JsonDOWN.prototype._open = function(options, cb) {
-  this._store = {};
   fs.readFile(this.location, 'utf-8', function(err, data) {
     if (err) {
       if (err.code == 'ENOENT') return cb(null, this);
       return cb(err);
     }
     try {
-      this._store = JSON.parse(data);
+      data = JSON.parse(data);
     } catch (e) {
       return cb(new Error('Error parsing JSON in ' + this.location +
                           ': ' + e.message));
     }
+    this._isLoadingFromFile = true;
+    this._batch(Object.keys(data).filter(function(key) {
+      return /^\$/.test(key);
+    }).map(function(key) {
+      return {
+        type: 'put',
+        key: key.slice(1),
+        value: data[key]
+      };
+    }), {}, noop);
+    this._isLoadingFromFile = false;
     cb(null, this);
   }.bind(this));
 };
@@ -50,24 +60,13 @@ JsonDOWN.prototype._writeToDisk = function(cb) {
 };
 
 JsonDOWN.prototype._put = function(key, value, options, cb) {
-  this._store[KEY_PREFIX + key] = value;
-  this._writeToDisk(cb);
-};
-
-JsonDOWN.prototype._get = function(key, options, cb) {
-  var value = this._store[KEY_PREFIX + key];
-  if (value === undefined)
-    return process.nextTick(function() { cb(new Error('NotFound')); });
-  process.nextTick(function() { cb(null, value); });
+  MemDOWN.prototype._put.call(this, key, value, options, noop);
+  if (!this._isLoadingFromFile) this._writeToDisk(cb);
 };
 
 JsonDOWN.prototype._del = function(key, options, cb) {
-  delete this._store[KEY_PREFIX + key];
+  MemDOWN.prototype._del.call(this, key, options, noop);
   this._writeToDisk(cb);
-};
-
-JsonDOWN.create = function(location) {
-  return new JsonDOWN(location);
 };
 
 module.exports = JsonDOWN;
