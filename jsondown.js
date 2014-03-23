@@ -15,6 +15,31 @@ function JsonDOWN(location) {
 
 util.inherits(JsonDOWN, MemDOWN);
 
+JsonDOWN.prototype._jsonToBatchOps = function(data) {
+  return Object.keys(data).map(function(key) {
+    var value = data[key];
+    if (/^\$/.test(key)) {
+      key = key.slice(1);
+    } else {
+      try {
+        key = new Buffer(JSON.parse(key));
+      } catch (e) {
+        throw new Error('Error parsing key ' + JSON.stringify(key) +
+                        ' as a buffer');
+      }
+    }
+    if (typeof(value) != 'string') {
+      try {
+        value = new Buffer(value);
+      } catch (e) {
+        throw new Error('Error parsing value ' + JSON.stringify(value) +
+                        ' as a buffer');
+      }
+    }
+    return {type: 'put', key: key, value: value};
+  });
+};
+
 JsonDOWN.prototype._open = function(options, cb) {
   fs.readFile(this.location, 'utf-8', function(err, data) {
     if (err) {
@@ -28,16 +53,15 @@ JsonDOWN.prototype._open = function(options, cb) {
                           ': ' + e.message));
     }
     this._isLoadingFromFile = true;
-    this._batch(Object.keys(data).filter(function(key) {
-      return /^\$/.test(key);
-    }).map(function(key) {
-      return {
-        type: 'put',
-        key: key.slice(1),
-        value: data[key]
-      };
-    }), {}, noop);
-    this._isLoadingFromFile = false;
+    try {
+      try {
+        this._batch(this._jsonToBatchOps(data), {}, noop);
+      } finally {
+        this._isLoadingFromFile = false;
+      }
+    } catch (e) {
+      return cb(e);
+    }
     cb(null, this);
   }.bind(this));
 };

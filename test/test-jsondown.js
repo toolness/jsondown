@@ -35,6 +35,26 @@ describe('JsonDOWN', function() {
     });
   });
 
+  it('should raise error on corrupted key', function(done) {
+    putLocation({'not_a_buffer': 'nope'});
+    var db = levelup(LOCATION, {db: JsonDOWN});
+    db.open();
+    db.on('error', function(err) {
+      err.message.should.eql('Error parsing key "not_a_buffer" as a buffer');
+      done();      
+    });
+  });
+
+  it('should raise error on corrupted value', function(done) {
+    putLocation({'$hi': false});
+    var db = levelup(LOCATION, {db: JsonDOWN});
+    db.open();
+    db.on('error', function(err) {
+      err.message.should.eql('Error parsing value false as a buffer');
+      done();      
+    });
+  });
+
   it('should get existing keys', function(done) {
     putLocation({'$hey': 'there'});
     var db = levelup(LOCATION, {db: JsonDOWN});
@@ -49,6 +69,26 @@ describe('JsonDOWN', function() {
     var db = levelup(LOCATION, {db: JsonDOWN});
     db.get('nonexistent', function(err, value) {
       err.notFound.should.be.true;
+      done();
+    });
+  });
+
+  it('should support binary keys', function(done) {
+    putLocation({'[1,2,3]': 'yo'});
+    var db = levelup(LOCATION, {db: JsonDOWN});
+    db.get(new Buffer([1,2,3]), function(err, value) {
+      if (err) return done(err);
+      value.should.eql('yo');
+      done();
+    });
+  });
+
+  it('should support binary values', function(done) {
+    putLocation({'$hello': [1,2,3]});
+    var db = levelup(LOCATION, {db: JsonDOWN});
+    db.get('hello', function(err, value) {
+      if (err) return done(err);
+      value.should.eql(new Buffer([1,2,3]));
       done();
     });
   });
