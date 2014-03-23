@@ -15,3 +15,5 @@ var db = levelup('./mydata.json', { db: require('jsondown') });
 
 db.put('foo', 'bar');
 ```
+
+  [LevelDOWN]: https://github.com/rvagg/node-leveldown
