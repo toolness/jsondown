@@ -36,7 +36,7 @@ describe('JsonDOWN', function() {
   });
 
   it('should get existing keys', function(done) {
-    putLocation({'_hey': 'there'});
+    putLocation({'$hey': 'there'});
     var db = levelup(LOCATION, {db: JsonDOWN});
     db.get('hey', function(err, value) {
       if (err) return done(err);
@@ -54,7 +54,7 @@ describe('JsonDOWN', function() {
   });
 
   it('should delete', function(done) {
-    putLocation({'_whats': 'up'});
+    putLocation({'$whats': 'up'});
     var db = levelup(LOCATION, {db: JsonDOWN});
     db.del('whats', function(err) {
       if (err) return done(err);
@@ -67,7 +67,7 @@ describe('JsonDOWN', function() {
     var db = levelup(LOCATION, {db: JsonDOWN});
     db.put('foo', 'bar', function(err) {
       if (err) return done(err);
-      getLocation().should.eql({_foo: 'bar'});
+      getLocation().should.eql({$foo: 'bar'});
       done();
     });
   });
@@ -80,15 +80,15 @@ describe('JsonDOWN', function() {
     db.put('silly', 'monkey', function(err) {
       if (err) return done(err);
       getLocation().should.eql({
-        _foo: 'bar',
-        _lol: 'cats',
-        _silly: 'monkey'
+        $foo: 'bar',
+        $lol: 'cats',
+        $silly: 'monkey'
       });
       fs.writeFile.callCount.should.eql(2);
       db.del('lol', function(err) {
         getLocation().should.eql({
-          _foo: 'bar',
-          _silly: 'monkey'
+          $foo: 'bar',
+          $silly: 'monkey'
         });
         fs.writeFile.callCount.should.eql(3);
         fs.writeFile.restore();

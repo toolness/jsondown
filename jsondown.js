@@ -2,8 +2,8 @@ var util = require('util');
 var fs = require('fs');
 var AbstractLevelDOWN = require('abstract-leveldown').AbstractLevelDOWN;
 
-// Prefix key with '_' to avoid key='__proto__' type shenanigans.
-var KEY_PREFIX = '_';
+// Prefix to avoid key='__proto__' type shenanigans.
+var KEY_PREFIX = '$';
 
 function JsonDOWN(location) {
   if (!(this instanceof JsonDOWN))
