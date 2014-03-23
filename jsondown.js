@@ -2,6 +2,8 @@ var util = require('util');
 var fs = require('fs');
 var MemDOWN = require('memdown');
 
+var niceStringify = require('./nice-stringify');
+
 function noop() {}
 
 function JsonDOWN(location) {
@@ -70,7 +72,7 @@ JsonDOWN.prototype._writeToDisk = function(cb) {
   if (this._isWriting)
     return this._queuedWrites.push(cb);
   this._isWriting = true;
-  fs.writeFile(this.location, JSON.stringify(this._store, null, 2), {
+  fs.writeFile(this.location, niceStringify(this._store), {
     encoding: 'utf-8'
   }, function(err) {
     var queuedWrites = this._queuedWrites.splice(0);
