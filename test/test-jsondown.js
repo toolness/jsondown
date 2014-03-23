@@ -1,6 +1,7 @@
 var fs = require('fs');
 var should = require('should');
 var levelup = require('levelup');
+var sinon = require('sinon');
 
 var JsonDOWN = require('../jsondown');
 
@@ -68,6 +69,31 @@ describe('JsonDOWN', function() {
       if (err) return done(err);
       getLocation().should.eql({_foo: 'bar'});
       done();
+    });
+  });
+
+  it('should intelligently queue writes', function(done) {
+    var db = levelup(LOCATION, {db: JsonDOWN});
+    sinon.spy(fs, 'writeFile');
+    db.put('foo', 'bar');
+    db.put('lol', 'cats');
+    db.put('silly', 'monkey', function(err) {
+      if (err) return done(err);
+      getLocation().should.eql({
+        _foo: 'bar',
+        _lol: 'cats',
+        _silly: 'monkey'
+      });
+      fs.writeFile.callCount.should.eql(2);
+      db.del('lol', function(err) {
+        getLocation().should.eql({
+          _foo: 'bar',
+          _silly: 'monkey'
+        });
+        fs.writeFile.callCount.should.eql(3);
+        fs.writeFile.restore();
+        done();
+      });
     });
   });
 });

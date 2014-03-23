@@ -9,6 +9,8 @@ function JsonDOWN(location) {
   if (!(this instanceof JsonDOWN))
     return new JsonDOWN(location);
   AbstractLevelDOWN.call(this, location);
+  this._isWriting = false;
+  this._queuedWrites = [];
 }
 
 util.inherits(JsonDOWN, AbstractLevelDOWN);
@@ -31,9 +33,20 @@ JsonDOWN.prototype._open = function(options, cb) {
 };
 
 JsonDOWN.prototype._writeToDisk = function(cb) {
+  if (this._isWriting)
+    return this._queuedWrites.push(cb);
+  this._isWriting = true;
   fs.writeFile(this.location, JSON.stringify(this._store, null, 2), {
     encoding: 'utf-8'
-  }, cb);
+  }, function(err) {
+    var queuedWrites = this._queuedWrites.splice(0);
+    this._isWriting = false;
+    if (queuedWrites.length)
+      this._writeToDisk(function(err) {
+        queuedWrites.forEach(function(cb) { cb(err); });
+      });
+    cb(err);
+  }.bind(this));
 };
 
 JsonDOWN.prototype._put = function(key, value, options, cb) {
