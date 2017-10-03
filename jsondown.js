@@ -1,6 +1,30 @@
 var util = require('util');
-var fs = require('fs');
+var fs
 var MemDOWN = require('memdown');
+
+// If global 'runtime' exists
+runtime ?
+  (() => {
+		const fatfs = require('fatfs')
+    const disk = runtime.block.devices[0];
+    const blockInterface = {
+      sectorSize: disk.formatInfo.sectorSize,
+      numSectors: disk.formatInfo.totalSectorCount,
+      readSectors(i, dest, cb) {
+        disk.read(i, dest)
+          .then(cb.bind(null, null))
+          .catch(cb);
+        },
+        writeSectors(i, data, cb) {
+          disk.write(i, data)
+            .then(cb.bind(null, null))
+            .catch(cb);
+          }
+    }
+    fs = fatfs.createFileSystem(blockInterface);
+  })() :
+  fs = require('fs')
+
 
 var niceStringify = require('./nice-stringify');
 
@@ -24,7 +48,7 @@ JsonDOWN.prototype._jsonToBatchOps = function(data) {
       key = key.slice(1);
     } else {
       try {
-        key = new Buffer(JSON.parse(key));
+        key = new Buffer(key);
       } catch (e) {
         throw new Error('Error parsing key ' + JSON.stringify(key) +
                         ' as a buffer');
@@ -43,7 +67,7 @@ JsonDOWN.prototype._jsonToBatchOps = function(data) {
 };
 
 JsonDOWN.prototype._open = function(options, cb) {
-  fs.readFile(this.location, 'utf-8', function(err, data) {
+  fs.readFile(this.location, {encoding: 'utf-8', flag: 'r'}, function(err, data) {
     if (err) {
       if (err.code == 'ENOENT') return cb(null, this);
       return cb(err);
