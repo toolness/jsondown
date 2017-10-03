@@ -1,14 +1,16 @@
 var util = require('util');
-var fs
+var os = require('os');
 var MemDOWN = require('memdown');
-var runtime = runtime || false
+var runtime
+var fs
 
 // If global 'runtime' exists
-runtime ?
+(os.hostname() === 'runtime') ?
   (() => {
-		const fatfs = require('fatfs')
-    const disk = runtime.block.devices[0];
-    const blockInterface = {
+    var runtime = require('runtimejs')
+    var fatfs = require('fatfs')
+    var disk = runtime.block.devices[0];
+    var blockInterface = {
       sectorSize: disk.formatInfo.sectorSize,
       numSectors: disk.formatInfo.totalSectorCount,
       readSectors(i, dest, cb) {
