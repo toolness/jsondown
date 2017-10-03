@@ -1,6 +1,7 @@
 var util = require('util');
 var fs
 var MemDOWN = require('memdown');
+var runtime = runtime || false
 
 // If global 'runtime' exists
 runtime ?
@@ -48,7 +49,7 @@ JsonDOWN.prototype._jsonToBatchOps = function(data) {
       key = key.slice(1);
     } else {
       try {
-        key = new Buffer(key);
+        key = new Buffer(JSON.parse(key));
       } catch (e) {
         throw new Error('Error parsing key ' + JSON.stringify(key) +
                         ' as a buffer');
