@@ -1,32 +1,9 @@
 var util = require('util');
 var os = require('os');
 var MemDOWN = require('memdown');
-var runtime
-var fs
-
-// If global 'runtime' exists
-(os.hostname() === 'runtime') ?
-  (() => {
-    var runtime = require('runtimejs')
-    var fatfs = require('fatfs')
-    var disk = runtime.block.devices[0];
-    var blockInterface = {
-      sectorSize: disk.formatInfo.sectorSize,
-      numSectors: disk.formatInfo.totalSectorCount,
-      readSectors(i, dest, cb) {
-        disk.read(i, dest)
-          .then(cb.bind(null, null))
-          .catch(cb);
-        },
-        writeSectors(i, data, cb) {
-          disk.write(i, data)
-            .then(cb.bind(null, null))
-            .catch(cb);
-          }
-    }
-    fs = fatfs.createFileSystem(blockInterface);
-  })() :
-  fs = require('fs')
+var fs = (os.hostname() === 'runtime') ?
+  require('./runtime-fs') :
+  require('fs')
 
 
 var niceStringify = require('./nice-stringify');
