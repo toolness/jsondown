@@ -1,6 +1,10 @@
 var util = require('util');
-var fs = require('fs');
+var os = require('os');
 var MemDOWN = require('memdown');
+var fs = (os.hostname() === 'runtime') ?
+  require('./runtime-fs') :
+  require('fs')
+
 
 var niceStringify = require('./nice-stringify');
 
@@ -43,7 +47,7 @@ JsonDOWN.prototype._jsonToBatchOps = function(data) {
 };
 
 JsonDOWN.prototype._open = function(options, cb) {
-  fs.readFile(this.location, 'utf-8', function(err, data) {
+  fs.readFile(this.location, {encoding: 'utf-8', flag: 'r'}, function(err, data) {
     if (err) {
       if (err.code == 'ENOENT') return cb(null, this);
       return cb(err);
