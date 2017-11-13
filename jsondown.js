@@ -143,6 +143,11 @@ JsonDOWN.prototype._put = function(key, value, options, cb) {
   if (!this._isLoadingFromFile) this._writeToDisk(cb);
 };
 
+JsonDOWN.prototype._batch = function(array, options, cb) {
+  MemDOWN.prototype._batch.call(this, array, options, noop);
+  if (!this._isLoadingFromFile) this._writeToDisk(cb);
+};
+
 JsonDOWN.prototype._del = function(key, options, cb) {
   MemDOWN.prototype._del.call(this, key, options, noop);
   this._writeToDisk(cb);
