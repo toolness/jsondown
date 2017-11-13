@@ -40,6 +40,21 @@ function jsonToBatchOps(data) {
   });
 };
 
+function reviver(k, v) {
+  if (
+    v != null &&
+    typeof v === "object" &&
+    "type" in v &&
+    v.type === "Buffer" &&
+    "data" in v &&
+    Array.isArray(v.data)
+  ) {
+    return new Buffer(v.data);
+  } else {
+    return v;
+  }
+}
+
 function noop() {}
 
 function JsonDOWN(location) {
@@ -78,7 +93,7 @@ JsonDOWN.prototype._open = function(options, callback) {
           if (err)
             return callback(err, data);
           try {
-            data = JSON.parse(data);
+            data = JSON.parse(data, reviver);
           } catch (e) {
             return callback(
               new Error("Error parsing JSON in " + loc + ": " + e.message)
