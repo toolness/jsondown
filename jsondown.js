@@ -81,7 +81,7 @@ JsonDOWN.prototype._open = function(options, callback) {
       : this.location;
 
   mkdirp(subdir, function(errMkdirp) {
-    if (!errMkdirp)
+    if (errMkdirp)
       return callback(errMkdirp);
 
     fs.exists(loc, function(exists) {
