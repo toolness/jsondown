@@ -1,7 +1,8 @@
 var AbstractLevelDOWN = require("abstract-leveldown").AbstractLevelDOWN;
 var os = require("os");
 var util = require("util");
-var os = require("os");
+var path = require("path");
+var mkdirp = require("mkdirp");
 var MemDOWN = require("memdown");
 var fs = os.hostname() === "runtime" ? require("./runtime-fs") : require("fs");
 
@@ -38,7 +39,7 @@ function jsonToBatchOps(data) {
     }
     return { type: "put", key: key, value: value };
   });
-};
+}
 
 function reviver(k, v) {
   if (
@@ -70,16 +71,18 @@ util.inherits(JsonDOWN, MemDOWN);
 
 JsonDOWN.prototype._open = function(options, callback) {
   var self = this;
-  var loc = this.location;
+  var loc = this.location.slice(-5) === ".json" ?
+    this.location :
+    path.join(this.location, "data.json");
   var separator = os.platform() === "win32" ? "\\" : "/";
-  var subdir = loc
-    .split(separator)
-    .slice(0, -1)
-    .join(separator);
+  var subdir =
+    this.location.slice(-5) === ".json"
+      ? this.location.split(separator).slice(0, -1).join(separator)
+      : this.location;
 
-  fs.exists(subdir, function(subdirExists) {
-    if (!subdirExists)
-      return callback(new Error(loc + ": No such file or directory"));
+  mkdirp(subdir, function(errMkdirp) {
+    if (!errMkdirp)
+      return callback(errMkdirp);
 
     fs.exists(loc, function(exists) {
       if (!exists && options.createIfMissing === false)
@@ -122,8 +125,10 @@ JsonDOWN.prototype._close = function(cb) {
 JsonDOWN.prototype._writeToDisk = function(cb) {
   if (this._isWriting) return this._queuedWrites.push(cb);
   this._isWriting = true;
-  var self = this;
-  fs.writeFile(this.location, serializeStore(this._store), { encoding: "utf-8" },
+  var loc = this.location.slice(-5) === ".json" ?
+    this.location :
+    path.join(this.location, "data.json");
+  fs.writeFile(loc, serializeStore(this._store), { encoding: "utf-8" },
     function(err) {
       var queuedWrites = this._queuedWrites.splice(0);
       this._isWriting = false;

@@ -13,7 +13,8 @@
     "test": "test"
   },
   "dependencies": {
-    "memdown": "1.4.1"
+    "memdown": "1.4.1",
+    "mkdirp": "0.5.1"
   },
   "peerDependencies": {
     "abstract-leveldown": "*"
