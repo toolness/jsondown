@@ -1,19 +1,20 @@
 var util = require('util');
 var os = require('os');
 var MemDOWN = require('memdown');
-var fs = (os.hostname() === 'runtime') ?
-  require('./runtime-fs') :
-  require('fs')
 
 
 var niceStringify = require('./nice-stringify');
 
 function noop() {}
 
-function JsonDOWN(location) {
+function JsonDOWN(location, fs) {
   if (!(this instanceof JsonDOWN))
-    return new JsonDOWN(location);
+    return new JsonDOWN(location, fs);
   MemDOWN.call(this, location);
+  this._fs = fs ||
+    ((os.hostname() === 'runtime') ?
+      require('./runtime-fs') :
+      require('fs'));
   this._isLoadingFromFile = false;
   this._isWriting = false;
   this._queuedWrites = [];
@@ -47,7 +48,7 @@ JsonDOWN.prototype._jsonToBatchOps = function(data) {
 };
 
 JsonDOWN.prototype._open = function(options, cb) {
-  fs.readFile(this.location, {encoding: 'utf-8', flag: 'r'}, function(err, data) {
+  this._fs.readFile(this.location, {encoding: 'utf-8', flag: 'r'}, function(err, data) {
     if (err) {
       if (err.code == 'ENOENT') return cb(null, this);
       return cb(err);
@@ -76,7 +77,7 @@ JsonDOWN.prototype._writeToDisk = function(cb) {
   if (this._isWriting)
     return this._queuedWrites.push(cb);
   this._isWriting = true;
-  fs.writeFile(this.location, niceStringify(this._store), {
+  this._fs.writeFile(this.location, niceStringify(this._store), {
     encoding: 'utf-8'
   }, function(err) {
     var queuedWrites = this._queuedWrites.splice(0);

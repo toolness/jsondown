@@ -1,3 +1,4 @@
+var memfs = require('memfs');
 var fs = require('fs');
 var should = require('should');
 var levelup = require('levelup');
@@ -134,6 +135,19 @@ describe('JsonDOWN', function() {
         fs.writeFile.restore();
         done();
       });
+    });
+  });
+
+  it('should allow to pass fs', function(done) {
+    var db = levelup('/foo.json', {
+      db: function(location) {
+        return JsonDOWN(location, memfs);
+      }
+    });
+    db.put('foo', 'bar', function(err) {
+      if (err) return done(err);
+      memfs.readFileSync('/foo.json', 'utf-8').length.should.be.above(0);
+      done();
     });
   });
 });
