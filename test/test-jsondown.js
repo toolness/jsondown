@@ -27,38 +27,52 @@ describe('JsonDOWN', function() {
 
   it('should raise error on corrupted data', function(done) {
     putLocation('i am not valid json');
-    var db = levelup(LOCATION, {db: JsonDOWN});
-    db.open();
-    db.on('error', function(err) {
+    var db = levelup(JsonDOWN(LOCATION), function(err) {
       err.message.should.match(/^Error parsing JSON in _testdb/);
-      done();      
+      done();
     });
   });
 
   it('should raise error on corrupted key', function(done) {
     putLocation({'not_a_buffer': 'nope'});
-    var db = levelup(LOCATION, {db: JsonDOWN});
-    db.open();
-    db.on('error', function(err) {
+    var db = levelup(JsonDOWN(LOCATION), function(err) {
       err.message.should.eql('Error parsing key "not_a_buffer" as a buffer');
-      done();      
+      done();
     });
   });
 
   it('should raise error on corrupted value', function(done) {
     putLocation({'$hi': false});
-    var db = levelup(LOCATION, {db: JsonDOWN});
-    db.open();
-    db.on('error', function(err) {
+    var db = levelup(JsonDOWN(LOCATION), function(err) {
       err.message.should.eql('Error parsing value false as a buffer');
-      done();      
+      done();
+    });
+  });
+
+  it('should return values as buffers by default', function(done) {
+    putLocation({'$hello': 'there'});
+    var db = levelup(JsonDOWN(LOCATION));
+    db.get('hello', function(err, value) {
+      if (err) return done(err);
+      value.should.eql(Buffer.from('there', 'utf8'));
+      done();
+    });
+  });
+
+  it('should return string values as strings if asBuffer is set to false', function(done) {
+    putLocation({'$hello': 'there'});
+    var db = levelup(JsonDOWN(LOCATION));
+    db.get('hello', { asBuffer: false }, function(err, value) {
+      if (err) return done(err);
+      value.should.eql('there');
+      done();
     });
   });
 
   it('should get existing keys', function(done) {
     putLocation({'$hey': 'there'});
-    var db = levelup(LOCATION, {db: JsonDOWN});
-    db.get('hey', function(err, value) {
+    var db = levelup(JsonDOWN(LOCATION));
+    db.get('hey', { asBuffer: false }, function(err, value) {
       if (err) return done(err);
       value.should.eql('there');
       done();
@@ -66,7 +80,7 @@ describe('JsonDOWN', function() {
   });
 
   it('should raise error on nonexistent keys', function(done) {
-    var db = levelup(LOCATION, {db: JsonDOWN});
+    var db = levelup(JsonDOWN(LOCATION));
     db.get('nonexistent', function(err, value) {
       err.notFound.should.be.true;
       done();
@@ -75,8 +89,8 @@ describe('JsonDOWN', function() {
 
   it('should support binary keys', function(done) {
     putLocation({'[1,2,3]': 'yo'});
-    var db = levelup(LOCATION, {db: JsonDOWN});
-    db.get(new Buffer([1,2,3]), function(err, value) {
+    var db = levelup(JsonDOWN(LOCATION));
+    db.get(Buffer.from([1,2,3]), { asBuffer: false }, function(err, value) {
       if (err) return done(err);
       value.should.eql('yo');
       done();
@@ -85,17 +99,27 @@ describe('JsonDOWN', function() {
 
   it('should support binary values', function(done) {
     putLocation({'$hello': [1,2,3]});
-    var db = levelup(LOCATION, {db: JsonDOWN});
+    var db = levelup(JsonDOWN(LOCATION));
     db.get('hello', function(err, value) {
       if (err) return done(err);
-      value.should.eql(new Buffer([1,2,3]));
+      value.should.eql(Buffer.from([1,2,3]));
+      done();
+    });
+  });
+
+  it('should return binary values as buffers even if asBuffer is set to false', function(done) {
+    putLocation({'$hello': [1, 2, 3]});
+    var db = levelup(JsonDOWN(LOCATION));
+    db.get('hello', { asBuffer: false }, function(err, value) {
+      if (err) return done(err);
+      value.should.eql(Buffer.from([1, 2, 3]));
       done();
     });
   });
 
   it('should delete', function(done) {
     putLocation({'$whats': 'up'});
-    var db = levelup(LOCATION, {db: JsonDOWN});
+    var db = levelup(JsonDOWN(LOCATION));
     db.del('whats', function(err) {
       if (err) return done(err);
       getLocation().should.eql({});
@@ -104,7 +128,8 @@ describe('JsonDOWN', function() {
   });
 
   it('should put', function(done) {
-    var db = levelup(LOCATION, {db: JsonDOWN});
+    putLocation({});
+    var db = levelup(JsonDOWN(LOCATION));
     db.put('foo', 'bar', function(err) {
       if (err) return done(err);
       getLocation().should.eql({$foo: 'bar'});
@@ -113,7 +138,8 @@ describe('JsonDOWN', function() {
   });
 
   it('should intelligently queue writes', function(done) {
-    var db = levelup(LOCATION, {db: JsonDOWN});
+    putLocation({});
+    var db = levelup(JsonDOWN(LOCATION));
     sinon.spy(fs, 'writeFile');
     db.put('foo', 'bar');
     db.put('lol', 'cats');
