@@ -5,14 +5,17 @@ var fs = (os.hostname() === 'runtime') ?
   require('./runtime-fs') :
   require('fs')
 
-
-var niceStringify = require('./nice-stringify');
-
 function noop() {}
 
 function JsonDOWN(location) {
   if (!(this instanceof JsonDOWN))
     return new JsonDOWN(location);
+
+  // Memdown keeps the data in global cache, so we need to
+  // delete that data to make sure it doesn't override what we
+  // read from disk
+  MemDOWN.destroy.call(this, location, noop);
+
   MemDOWN.call(this, location);
   this._isLoadingFromFile = false;
   this._isWriting = false;
@@ -28,7 +31,7 @@ JsonDOWN.prototype._jsonToBatchOps = function(data) {
       key = key.slice(1);
     } else {
       try {
-        key = new Buffer(JSON.parse(key));
+        key = Buffer.from(JSON.parse(key));
       } catch (e) {
         throw new Error('Error parsing key ' + JSON.stringify(key) +
                         ' as a buffer');
@@ -36,7 +39,7 @@ JsonDOWN.prototype._jsonToBatchOps = function(data) {
     }
     if (typeof(value) != 'string') {
       try {
-        value = new Buffer(value);
+        value = Buffer.from(value);
       } catch (e) {
         throw new Error('Error parsing value ' + JSON.stringify(value) +
                         ' as a buffer');
@@ -76,7 +79,12 @@ JsonDOWN.prototype._writeToDisk = function(cb) {
   if (this._isWriting)
     return this._queuedWrites.push(cb);
   this._isWriting = true;
-  fs.writeFile(this.location, niceStringify(this._store), {
+  const data = {}
+  this._store[this._location].forEach((key, value) => {
+    data[serializeKey(key)] = serializeValue(value)
+  })
+  // TODO write each line so we don't need to store it in memory again
+  fs.writeFile(this.location, JSON.stringify(data), {
     encoding: 'utf-8'
   }, function(err) {
     var queuedWrites = this._queuedWrites.splice(0);
@@ -98,5 +106,25 @@ JsonDOWN.prototype._del = function(key, options, cb) {
   MemDOWN.prototype._del.call(this, key, options, noop);
   this._writeToDisk(cb);
 };
+
+function serializeKey (key) {
+  if (typeof key === 'string') {
+    return '$' + key;
+  } else if (Buffer.isBuffer(key)) {
+    return JSON.stringify(Array.prototype.slice.call(key, 0));
+  } else {
+    return key.toString();
+  }
+}
+
+function serializeValue (value) {
+  if (typeof value === 'string') {
+    return value;
+  } else if (Buffer.isBuffer(value)) {
+    return Array.prototype.slice.call(value, 0);
+  } else {
+    return value.toString();
+  }
+}
 
 module.exports = JsonDOWN;
