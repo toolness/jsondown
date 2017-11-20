@@ -13,16 +13,19 @@
     "test": "test"
   },
   "dependencies": {
-    "memdown": "0.7.0"
+    "memdown": "1.4.1",
+    "mkdirp": "0.5.1"
+  },
+  "peerDependencies": {
+    "abstract-leveldown": "*"
   },
   "devDependencies": {
-    "mocha": "~1.18.2",
-    "levelup": "~0.18.2",
-    "sinon": "1.9.0",
-    "should": "~3.2.0-beta1"
+    "levelup": "2.0.1",
+    "tape": "2.13.x",
+    "rimraf": "2.6.2"
   },
   "scripts": {
-    "test": "mocha -R spec"
+    "test": "tape test.js"
   },
   "homepage": "https://github.com/toolness/jsondown",
   "repository": {
