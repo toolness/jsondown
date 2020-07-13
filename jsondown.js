@@ -98,10 +98,6 @@ JsonDOWN.prototype._open = function (options, callback) {
             },
             function (err, data) {
               if (err) return callback(err, data);
-              console.log({
-                location: self.location,
-                data: data,
-              });
               try {
                 data = JSON.parse(data, reviver);
               } catch (e) {
@@ -112,7 +108,7 @@ JsonDOWN.prototype._open = function (options, callback) {
               self._isLoadingFromFile = true;
               try {
                 try {
-                  self._batch(jsonToBatchOps(data[self._location]), {}, noop);
+                  self._batch(jsonToBatchOps(data), {}, noop);
                 } finally {
                   self._isLoadingFromFile = false;
                 }
