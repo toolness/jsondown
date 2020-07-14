@@ -4,8 +4,7 @@ const util = require("util");
 const path = require("path");
 const mkdirp = require("mkdirp");
 const MemDOWN = require("memdown");
-const fs =
-  os.hostname() === "runtime" ? require("./runtime-fs") : require("fs");
+const fs = require("fs");
 
 function serializeStore(store) {
   var result = {};
@@ -21,7 +20,7 @@ function jsonToBatchOps(data) {
   }
   return Object.keys(data).map(function (key) {
     var value = data[key];
-    if (typeof value != "string") {
+    if (typeof value !== "string") {
       try {
         value = new Buffer(value);
       } catch (e) {
@@ -73,23 +72,23 @@ JsonDOWN.prototype._open = function (options, callback) {
     this.location.slice(-5) === ".json"
       ? this.location
       : path.join(this.location, "data.json");
-  var separator = os.platform() === "win32" ? "\\" : "/";
   var subdir =
     this.location.slice(-5) === ".json"
-      ? this.location.split(separator).slice(0, -1).join(separator)
+      ? this.location.split(path.sep).slice(0, -1).join(path.sep)
       : this.location;
 
   mkdirp(subdir)
     .then((made) => {
       fs.exists(loc, function (exists) {
-        if (!exists && options.createIfMissing === false)
+        if (!exists && options.createIfMissing === false) {
           callback(
             new Error(loc + " does not exist (createIfMissing is false)")
           );
-        else if (exists && options.errorIfExists)
+        } else if (exists && options.errorIfExists) {
           callback(new Error(loc + " exists (errorIfExists is true)"));
-        else if (!exists) fs.open(loc, "w", callback);
-        else
+        } else if (!exists) {
+          fs.open(loc, "w", callback);
+        } else {
           fs.readFile(
             loc,
             {
@@ -118,6 +117,7 @@ JsonDOWN.prototype._open = function (options, callback) {
               callback(null, self);
             }
           );
+        }
       });
     })
     .catch((errMkdirp) => callback(errMkdirp));
@@ -143,12 +143,13 @@ JsonDOWN.prototype._writeToDisk = function (cb) {
     function (err) {
       var queuedWrites = this._queuedWrites.splice(0);
       this._isWriting = false;
-      if (queuedWrites.length)
+      if (queuedWrites.length) {
         this._writeToDisk(function (err) {
           queuedWrites.forEach(function (cb) {
             cb(err);
           });
         });
+      }
       cb(err);
     }.bind(this)
   );
