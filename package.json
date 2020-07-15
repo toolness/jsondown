@@ -13,20 +13,23 @@
     "test": "test"
   },
   "dependencies": {
-    "memdown": "1.4.1",
-    "mkdirp": "0.5.1"
+    "memdown": "^5.1.0",
+    "mkdirp": "^1.0.4"
   },
   "peerDependencies": {
     "abstract-leveldown": "*"
   },
   "devDependencies": {
-    "abstract-leveldown": "3.0.x",
-    "levelup": "2.0.1",
-    "tape": "2.13.x",
-    "rimraf": "2.6.2"
+    "abstract-leveldown": "^6.3.0",
+    "coveralls": "^3.1.0",
+    "levelup": "^4.4.0",
+    "nyc": "^15.1.0",
+    "tape": "^5.0.1",
+    "tempy": "^0.5.0"
   },
   "scripts": {
-    "test": "tape test.js"
+    "coverage": "nyc report --reporter=text-lcov --reporter=html | coveralls",
+    "test": "nyc tape test.js"
   },
   "homepage": "https://github.com/toolness/jsondown",
   "repository": {
@@ -34,5 +37,8 @@
     "url": "https://github.com/toolness/jsondown.git"
   },
   "author": "Atul Varma <varmaa@gmail.com>",
-  "license": "BSD"
+  "license": "0BSD",
+  "engines": {
+    "node": ">=10"
+  }
 }

@@ -1,29 +1,44 @@
-var test = require("tape"),
-  testCommon = require("abstract-leveldown/testCommon"),
-  jsonDOWN = require("./jsondown"),
-  testBuffer = require("fs").readFileSync(__filename),
-  db;
+const test = require("tape");
+const suite = require("abstract-leveldown/test");
+const JsonDOWN = require("./jsondown");
+const tempy = require("tempy");
 
-/*** compatibility with basic LevelDOWN API ***/
+const testCommon = suite.common({
+  test,
+  factory: () => new JsonDOWN(tempy.directory()),
+});
 
-require("abstract-leveldown/abstract/leveldown-test").args(jsonDOWN, test, testCommon);
+suite(testCommon);
 
-require("abstract-leveldown/abstract/open-test").all(jsonDOWN, test, testCommon);
+test("setUp", testCommon.setUp);
 
-require("abstract-leveldown/abstract/del-test").all(jsonDOWN, test, testCommon);
+test("custom test", function (t) {
+  var db = testCommon.factory();
+  db.location = db.location + "/data.json";
 
-require("abstract-leveldown/abstract/get-test").all(jsonDOWN, test, testCommon);
+  // default createIfMissing=true, errorIfExists=false
+  db.open(function (err) {
+    t.error(err);
+    db.close(function () {
+      t.end();
+    });
+  });
+});
 
-require("abstract-leveldown/abstract/put-test").all(jsonDOWN, test, testCommon);
-
-require("abstract-leveldown/abstract/put-get-del-test").all(jsonDOWN, test, testCommon, testBuffer);
-
-require("abstract-leveldown/abstract/batch-test").all(jsonDOWN, test, testCommon);
-
-require("abstract-leveldown/abstract/chained-batch-test").all(jsonDOWN, test, testCommon);
-
-require("abstract-leveldown/abstract/close-test").close(jsonDOWN, test, testCommon);
-
-require("abstract-leveldown/abstract/iterator-test").all(jsonDOWN, test, testCommon);
-
-require("abstract-leveldown/abstract/ranges-test").all(jsonDOWN, test, testCommon);
+test("tearDown", testCommon.tearDown);
+//
+// test('test simple put()', function (t) {
+//
+//   db.put('foo', 'bar', function (err) {
+//     t.error(err)
+//     db.get('foo', function (err, value) {
+//       t.error(err)
+//       var result = value.toString()
+//       if (isTypedArray(value)) {
+//         result = String.fromCharCode.apply(null, new Uint16Array(value))
+//       }
+//       t.equal(result, 'bar')
+//       t.end()
+//     })
+//   })
+// })

@@ -10,17 +10,10 @@ data stores that need just a pinch of persistence.
 ## Example
 
 ```js
-var levelup = require('levelup');
-var db = levelup('./mydata.json', { db: require('jsondown') });
+const levelup = require("levelup");
+const jsondown = require("jsondown");
 
-db.put('foo', 'bar');
+const db = levelup(jsondown("./mydata.json"));
+
+db.put("foo", "bar");
 ```
-
-## Alternative Runtimes
-
-In addition to NodeJS, JsonDOWN can be used on the [RuntimeJS][]
-javascript unikernel. Additional details are provided in the `guides`
-section of this repositiory.
-
-  [LevelDOWN]: https://github.com/rvagg/node-leveldown
-  [RuntimeJS]: https://github.com/runtimejs/runtime
