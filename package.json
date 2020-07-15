@@ -37,5 +37,8 @@
     "url": "https://github.com/toolness/jsondown.git"
   },
   "author": "Atul Varma <varmaa@gmail.com>",
-  "license": "0BSD"
+  "license": "0BSD",
+  "engines": {
+    "node": ">=10"
+  }
 }

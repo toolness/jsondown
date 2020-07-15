@@ -10,8 +10,10 @@ data stores that need just a pinch of persistence.
 ## Example
 
 ```js
-var levelup = require("levelup");
-var db = levelup("./mydata.json", { db: require("jsondown") });
+const levelup = require("levelup");
+const jsondown = require("jsondown");
+
+const db = levelup(jsondown("./mydata.json"));
 
 db.put("foo", "bar");
 ```
